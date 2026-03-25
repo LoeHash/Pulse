@@ -1,13 +1,14 @@
 package com.ruoyi.common.annotation;
 
+import com.ruoyi.common.utils.poi.ExcelHandlerAdapter;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.math.BigDecimal;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import com.ruoyi.common.utils.poi.ExcelHandlerAdapter;
 
 /**
  * 自定义导出Excel数据注解
@@ -56,7 +57,6 @@ public @interface Excel
     /**
      * BigDecimal 舍入规则 默认:BigDecimal.ROUND_HALF_EVEN
      */
-    @SuppressWarnings("deprecation")
     public int roundingMode() default BigDecimal.ROUND_HALF_EVEN;
 
     /**

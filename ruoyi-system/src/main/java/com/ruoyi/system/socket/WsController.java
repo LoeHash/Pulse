@@ -1,5 +1,6 @@
 package com.ruoyi.system.socket;
 
+import com.ruoyi.common.annotation.Anonymous;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,5 +38,13 @@ public class WsController
         int count = wsSessionManager.broadcast(message);
         return AjaxResult.success("sent", count);
     }
+
+    @GetMapping("/list")
+    @Anonymous
+    public AjaxResult list()
+    {
+        return AjaxResult.success("onlineClients", wsSessionManager.onlineList());
+    }
+
 }
 

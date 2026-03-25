@@ -1,6 +1,8 @@
 package com.ruoyi.framework.config;
 
 import java.util.concurrent.TimeUnit;
+
+import com.ruoyi.framework.interceptor.JwtInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,6 +48,19 @@ public class ResourcesConfig implements WebMvcConfigurer
     public void addInterceptors(InterceptorRegistry registry)
     {
         registry.addInterceptor(repeatSubmitInterceptor).addPathPatterns("/**");
+        // JWT拦截器只拦截用户端路径
+        registry.addInterceptor(new JwtInterceptor())
+                .addPathPatterns(
+                        "/client/**",     // 用户端业务
+                        "/admin/**",      // 管理端
+                        "/member/**",     // 会员中心
+                        "/api/user/**"    // 用户API
+                )
+                .excludePathPatterns(
+                        "/client/auth/**",  // 用户认证相关放行
+                        "/client/test/**"  // 公共接口
+                )
+                .order(1);
     }
 
     /**

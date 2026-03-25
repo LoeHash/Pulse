@@ -91,6 +91,32 @@ spring:
           max-active: 8
           # #连接池最大阻塞等待时间（使用负值表示没有限制）
           max-wait: -1ms
+recommend:
+  recall:
+    latest:
+      lambda: 0.03
+
+
+
+threadPool:
+  global:
+    # 核心线程数
+    corePoolSize: 10
+    # 最大线程数
+    maxPoolSize: 200
+    # 队列容量
+    queueCapacity: 10
+    # 时间单位 s
+    keepAliveTime: 30
+
+  messageTP:
+    # 核心线程数
+    corePoolSize: 10
+    # 最大线程数
+    maxPoolSize: 200
+    # 队列容量
+    queueCapacity: 10
+    keepAliveTime: 30
 
 # token配置
 token:

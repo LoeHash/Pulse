@@ -1,0 +1,12 @@
+com/ruoyi/system/mapper/ForumBoardMapper.class
+com/ruoyi/system/service/SportRecordService.class
+com/ruoyi/system/service/impl/SportServiceImpl.class
+com/ruoyi/system/service/ForumPostService.class
+com/ruoyi/system/service/impl/SportRecordServiceImpl.class
+com/ruoyi/system/mapper/ForumPostMapper.class
+com/ruoyi/system/service/SportService.class
+com/ruoyi/system/mapper/SportRecordMapper.class
+com/ruoyi/system/service/impl/ForumBoardServiceImpl.class
+com/ruoyi/system/mapper/SportMapper.class
+com/ruoyi/system/service/impl/ForumPostServiceImpl.class
+com/ruoyi/system/service/ForumBoardService.class

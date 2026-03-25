@@ -1,6 +1,7 @@
 package com.ruoyi.system.socket;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,11 @@ import jakarta.websocket.Session;
 @Component
 public class WsSessionManager
 {
+    //client id -> session
     private final Map<String, Session> sessionMap = new ConcurrentHashMap<>();
+
+    //session id -> client id
+    private final Map<String, String> sessionIdToClientId = new ConcurrentHashMap<>();
 
     public void add(String clientId, Session session)
     {
@@ -22,6 +27,15 @@ public class WsSessionManager
     public void remove(String clientId)
     {
         sessionMap.remove(clientId);
+    }
+
+
+    public Session getOnline(String clientId){
+        return sessionMap.get(clientId);
+    }
+
+    public Collection<Session> onlineList(){
+        return sessionMap.values();
     }
 
     public int onlineCount()
@@ -62,5 +76,28 @@ public class WsSessionManager
             session.close();
         }
     }
+
+    public void addSessionId(String sessionId, String clientId)
+    {
+        if (sessionId.isEmpty() || clientId.isEmpty()){
+            throw new RuntimeException("你不能添加一个空的 sessionId 或 clientId");
+        }
+
+        sessionIdToClientId.put(sessionId, clientId);
+    }
+
+    public void removeSessionId(String sessionId)
+    {
+        if (sessionId.isEmpty()){
+            throw new RuntimeException("你不能删除一个空的 sessionId");
+        }
+
+        sessionIdToClientId.remove(sessionId);
+    }
+
+    public String getSessionIdToClientId(String sid){
+        return sessionIdToClientId.get(sid);
+    }
+
 }
 

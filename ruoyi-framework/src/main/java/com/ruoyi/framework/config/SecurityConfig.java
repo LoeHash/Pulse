@@ -8,6 +8,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,7 +23,7 @@ import com.ruoyi.framework.security.handle.LogoutSuccessHandlerImpl;
 
 /**
  * spring security配置
- * 
+ *
  * @author ruoyi
  */
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -45,7 +47,7 @@ public class SecurityConfig
      */
     @Autowired
     private JwtAuthenticationTokenFilter authenticationTokenFilter;
-    
+
     /**
      * 跨域过滤器
      */
@@ -62,7 +64,7 @@ public class SecurityConfig
 	 * 身份验证实现
 	 */
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception 
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception
 	{
 		return authenticationConfiguration.getAuthenticationManager();
 	}
@@ -82,41 +84,75 @@ public class SecurityConfig
      * rememberMe          |   允许通过remember-me登录的用户访问
      * authenticated       |   用户登录后可访问
      */
+    /**管理端所有请求走springsecurity，用户端自己实现*/
     @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception
-    {
+    protected SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
-            // CSRF禁用，因为不使用session
-            .csrf(csrf -> csrf.disable())
-            // 禁用HTTP响应标头
-            .headers((headersCustomizer) -> {
-                headersCustomizer.cacheControl(cache -> cache.disable()).frameOptions(options -> options.sameOrigin());
-            })
-            // 认证失败处理类
-            .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-            // 基于token，所以不需要session
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 注解标记允许匿名访问的url
-            .authorizeHttpRequests((requests) -> {
-                permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
-                // 对于登录login 注册register 验证码captchaImage 允许匿名访问
-                requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
-                    // WebSocket 握手地址
-                    .requestMatchers("/ws/basic/**").permitAll()
-                    // 静态资源，可匿名访问
-                    .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
-                    .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
-                    // 除上面外的所有请求全部需要鉴权认证
-                    .anyRequest().authenticated();
-            })
-            // 添加Logout filter
-            .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
-            // 添加JWT filter
-            .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
-            // 添加CORS filter
-            .addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class)
-            .addFilterBefore(corsFilter, LogoutFilter.class)
-            .build();
+                // CSRF禁用，因为不使用session
+                .csrf(AbstractHttpConfigurer::disable)
+                // 禁用HTTP响应标头
+                .headers((headersCustomizer) -> {
+                    headersCustomizer.cacheControl(HeadersConfigurer.CacheControlConfig::disable)
+                            .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin);
+                })
+                // 认证失败处理类
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
+                // 基于token，所以不需要session
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // 权限配置
+                .authorizeHttpRequests((requests) -> {
+                    // 1. 先获取原有的白名单
+                    permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
+
+                    // 2. 用户端路径完全放行（交给JWT拦截器处理）
+//                    requests.antMatchers("/client/**").permitAll()
+//                            .antMatchers("/admin/**").permitAll()
+//                            .antMatchers("/member/**").permitAll()
+//                            .antMatchers("/api/user/**").permitAll()
+                    requests.requestMatchers("/client/**").permitAll()
+                            .requestMatchers("/admin/**").permitAll()
+                            .requestMatchers("/member/**").permitAll()
+                            .requestMatchers("/api/user/**").permitAll()
+
+                            // 3. 原有的公开路径
+                            .requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                            // 静态资源，可匿名访问
+                            .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**/*.html",
+                                    "/**/*.css", "/**/*.js", "/profile/**").permitAll()
+                            .requestMatchers("/swagger-ui.html", "/swagger-resources/**",
+                                    "/webjars/**", "/*/api-docs", "/druid/**").permitAll()
+                            .requestMatchers(
+                                    "/swagger-ui.html",
+                                    "/swagger-ui/**",
+                                    "/swagger-resources/**",
+                                    "/webjars/**",
+                                    "/v2/api-docs",
+                                    "/v3/api-docs",
+                                    "/doc.html"
+                            ).permitAll()
+                            // 4. 管理端路径需要认证和权限（保持原有逻辑）
+//                            .antMatchers("/system/**").authenticated()
+//                            .antMatchers("/monitor/**").authenticated()
+//                            .antMatchers("/tool/**").authenticated()
+//                            .antMatchers("/admin/**").authenticated()
+
+                            .requestMatchers("/system/**").authenticated()
+                            .requestMatchers("/monitor/**").authenticated()
+                            .requestMatchers("/tool/**").authenticated()
+                            .requestMatchers("/admin/**").authenticated()
+
+                            // 5. 默认其他所有请求需要认证（保持原有安全策略）
+                            .anyRequest().permitAll();
+                })
+                // 添加Logout filter（只处理管理端登出）
+                .logout(logout -> logout.logoutUrl("/system/logout")
+                        .logoutSuccessHandler(logoutSuccessHandler))
+                // 添加JWT filter（Spring Security的JWT过滤器，只处理管理端认证）
+                .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                // 添加CORS filter
+                .addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class)
+                .addFilterBefore(corsFilter, LogoutFilter.class)
+                .build();
     }
 
     /**

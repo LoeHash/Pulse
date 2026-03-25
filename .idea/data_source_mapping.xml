@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourcePerFileMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/00ac8e93-cb48-4b4c-a740-d477ffa2104a/console.sql" value="00ac8e93-cb48-4b4c-a740-d477ffa2104a" />
+    <file url="file://$PROJECT_DIR$/ruoyi-system/src/main/java/com/ruoyi/system/mapper/UserProfileMapper.java" value="00ac8e93-cb48-4b4c-a740-d477ffa2104a" />
+    <file url="file://$PROJECT_DIR$/sql/data-gather-bak-1.sql" value="00ac8e93-cb48-4b4c-a740-d477ffa2104a" />
+    <file url="file://$PROJECT_DIR$/sql/quartz.sql" value="00ac8e93-cb48-4b4c-a740-d477ffa2104a" />
+    <file url="file://$PROJECT_DIR$/sql/ry_20250522.sql" value="00ac8e93-cb48-4b4c-a740-d477ffa2104a" />
+  </component>
+</project>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ruoyi.system.mapper.ForumPostMapper">
+
+    <!-- 按多个 boardId 一次性召回 -->
+    <select id="selectRecentByBoardIds" resultType="com.ruoyi.common.core.domain.ForumPost">
+        SELECT
+        id,
+        board_id,
+        tags,
+        like_count,
+        comment_count,
+        favorite_count,
+        view_count,
+        create_time
+        FROM tb_post
+        WHERE is_deleted = 0
+        AND status = 1
+        <if test="boardIds != null and boardIds.size() > 0">
+            AND board_id IN
+            <foreach collection="boardIds" item="bid" open="(" separator="," close=")">
+                #{bid}
+            </foreach>
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 按多个 tag 一次性召回（JSON数组字符串 + LIKE） -->
+    <select id="selectRecentByTags" resultType="com.ruoyi.common.core.domain.ForumPost">
+        SELECT
+        id,
+        board_id,
+        tags,
+        like_count,
+        comment_count,
+        favorite_count,
+        view_count,
+        create_time
+        FROM tb_post
+        WHERE is_deleted = 0
+        AND status = 1
+        <if test="tags != null and tags.size() > 0">
+            AND (
+            <foreach collection="tags" item="tag" separator=" OR ">
+                tags LIKE CONCAT('%"', #{tag}, '"%')
+            </foreach>
+            )
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectWithOutExposed" resultType="com.ruoyi.common.core.domain.ForumPost">
+        SELECT
+        id,
+        board_id,
+        tags,
+        like_count,
+        comment_count,
+        favorite_count,
+        view_count,
+        create_time
+        FROM tb_post
+        WHERE is_deleted = 0
+        AND status = 1
+        AND id NOT IN
+        <foreach collection="exposedPostIds" item="pid" open="(" separator="," close=")">
+            #{pid}
+        </foreach>
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+    <select id="selectRecentByBoardIdsWithOutExposed" resultType="com.ruoyi.common.core.domain.ForumPost">
+        SELECT
+        id,
+        board_id,
+        tags,
+        like_count,
+        comment_count,
+        favorite_count,
+        view_count,
+        create_time
+        FROM tb_post
+        WHERE is_deleted = 0
+        AND status = 1
+        <if test="boardIds != null and boardIds.size() > 0">
+            AND board_id IN
+            <foreach collection="boardIds" item="bid" open="(" separator="," close=")">
+                #{bid}
+            </foreach>
+        </if>
+        <if test="exposedPostIds != null and exposedPostIds.size() > 0">
+            AND id NOT IN
+            <foreach collection="exposedPostIds" item="pid" open="(" separator="," close=")">
+                #{pid}
+            </foreach>
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+    <select id="selectRecentByTagsWithOutExposed" resultType="com.ruoyi.common.core.domain.ForumPost">
+        SELECT
+        id,
+        board_id,
+        tags,
+        like_count,
+        comment_count,
+        favorite_count,
+        view_count,
+        create_time
+        FROM tb_post
+        WHERE is_deleted = 0
+        AND status = 1
+        <if test="tags != null and tags.size() > 0">
+            AND (
+            <foreach collection="tags" item="tag" separator=" OR ">
+                tags LIKE CONCAT('%"', #{tag}, '"%')
+            </foreach>
+            )
+        </if>
+        <if test="exposedPostIds != null and exposedPostIds.size() > 0">
+            AND id NOT IN
+            <foreach collection="exposedPostIds" item="pid" open="(" separator="," close=")">
+                #{pid}
+            </foreach>
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>
