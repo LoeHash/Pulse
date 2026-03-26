@@ -1,7 +1,7 @@
-package com.ruoyi.system.recommand.service;
+package com.ruoyi.system.recommend.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.ruoyi.system.recommand.domain.TbRecommendExposure;
+import com.ruoyi.system.recommend.domain.TbRecommendExposure;
 
 import java.util.List;
 import java.util.Set;

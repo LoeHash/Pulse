@@ -1,9 +1,9 @@
 package com.ruoyi.system.service.impl;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.domain.*;
 import com.ruoyi.common.enums.EventTypeWeight;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.UserHolder;
 import com.ruoyi.system.mapper.ForumPostMapper;
 import com.ruoyi.system.mapper.UserEventMapper;
@@ -59,7 +59,9 @@ public class RecommendEventServiceImpl implements RecommendEventService {
         }
 
         // 3) 查询用户画像，不存在则初始化
-        UserProfile profile = userProfileMapper.selectByUserId(userId);
+        UserProfile profile = userProfileMapper.selectOne(new LambdaQueryWrapper<UserProfile>()
+                .eq(UserProfile::getUserId, userId)
+                .last("LIMIT 1"));
         if (profile == null) {
             profile = new UserProfile();
             profile.setUserId(userId);

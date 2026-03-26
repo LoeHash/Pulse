@@ -1,7 +1,7 @@
-package com.ruoyi.system.recommand.mapper;
+package com.ruoyi.system.recommend.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.ruoyi.system.recommand.domain.TbRecommendExposure;
+import com.ruoyi.system.recommend.domain.TbRecommendExposure;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

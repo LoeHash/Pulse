@@ -665,3 +665,45 @@ CREATE TABLE `tb_recommend_exposure` (
                                          UNIQUE KEY `uk_user_post_day` (`user_id`,`post_id`,`biz_date`),
                                          KEY `idx_user_time` (`user_id`,`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS tb_config;
+
+CREATE TABLE tb_config (
+                           id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+
+                           config_key VARCHAR(100) NOT NULL COMMENT '配置key（唯一）',
+
+                           config_value TEXT NOT NULL COMMENT '配置值(JSON)',
+
+                           config_type VARCHAR(50) DEFAULT NULL COMMENT '配置类型（threadPool / algo 等）',
+
+                           description VARCHAR(255) DEFAULT NULL COMMENT '描述',
+
+                           version INT DEFAULT 0 COMMENT '乐观锁版本号',
+
+                           is_deleted TINYINT DEFAULT 0 COMMENT '逻辑删除（0-否 1-是）',
+
+                           create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+                           update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+
+                           UNIQUE KEY uk_config_key (config_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='动态配置表';
+
+# 线程池配置
+INSERT INTO tb_config (config_key, config_value, config_type, description)
+VALUES (
+           'threadPool.global',
+           '{"corePoolSize":10,"maxPoolSize":200,"queueCapacity":1000,"keepAliveTime":30}',
+           'threadPool',
+           '全局线程池配置'
+       );
+
+# 推荐算法配置
+INSERT INTO tb_config (config_key, config_value, config_type, description)
+VALUES (
+           'algo.recommend',
+           '{"likeFactor":2.0,"commentFactor":3.0,"favoriteFactor":2.0,"viewFactor":0.1,"timeDecay":0.03,"roadHitFactor":0.05,"exposedFilterDays":3,"latestWeight":0.20,"hotWeight":0.05,"preferenceWeight":0.75,"preferenceTopN":5,"preferenceBoardTopN":3}',
+           'algo',
+           '推荐算法配置'
+       );

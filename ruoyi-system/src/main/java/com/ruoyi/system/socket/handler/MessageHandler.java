@@ -5,11 +5,14 @@ import com.ruoyi.common.constant.RedisKeyPrefix;
 import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.utils.RedisKeyGenUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
+import com.ruoyi.system.config.domain.ins.ThreadPoolConfig;
+import com.ruoyi.system.config.event.DynamicConfigListener;
 import com.ruoyi.system.socket.WsSessionManager;
 import com.ruoyi.system.socket.core.domain.ws.WsMessage;
 import com.ruoyi.system.socket.core.threadpool.factory.DefaultFactory;
 import com.ruoyi.system.socket.core.threadpool.policy.DefaultPolicy;
 import jakarta.websocket.Session;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,10 +31,11 @@ import static com.ruoyi.common.utils.RedisKeyGenUtils.genMqGyroKey;
  */
 @Component
 @Slf4j
-public class MessageHandler extends AbstractHandler {
+public class MessageHandler extends AbstractHandler implements DynamicConfigListener<ThreadPoolConfig> {
 
     private static final String HANDLER_NAME = "MessageHandler";
 
+    @Getter
     private ExecutorService executorService;
 
     @Autowired
@@ -50,9 +54,42 @@ public class MessageHandler extends AbstractHandler {
     }
 
     public void initTasks(){
-        for (int i = 0; i < 200; i++) {
+        initTasks(200);
+    }
+
+    public void initTasks(int taskNumber){
+        for (int i = 0; i < taskNumber; i++) {
             executorService.execute(new MessageTask());
         }
+    }
+
+    @Override
+    public String getConfigKey() {
+        return "threadPool.global";
+    }
+
+    @Override
+    public void onChange(ThreadPoolConfig newConfig) {
+        executorService.shutdownNow();
+
+        //help gc
+        executorService = null;
+
+        //reinitlize
+        executorService = new ThreadPoolExecutor(
+                newConfig.getCorePoolSize(),
+                newConfig.getMaxPoolSize(),
+                newConfig.getKeepAliveTime(),
+                timeunit,
+                new LinkedBlockingQueue<>(newConfig.getCorePoolSize()),
+                new DefaultFactory(HANDLER_NAME),
+                new DefaultPolicy()
+        );
+
+        //init
+        initTasks(newConfig.getCorePoolSize() + new ThreadPoolConfig().getMaxPoolSize());
+
+        System.out.println("线程池已动态更新");
     }
 
     public MessageHandler(){

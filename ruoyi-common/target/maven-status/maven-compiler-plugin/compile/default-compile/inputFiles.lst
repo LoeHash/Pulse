@@ -46,6 +46,10 @@
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/TreeEntity.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/TreeSelect.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/User.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/UserEvent.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/UserEventBatchReq.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/UserEventReq.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/UserProfile.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/WorkoutRecord.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/CommentDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/CourseClientQueryDTO.java
@@ -70,8 +74,10 @@
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/SportRecordStartDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserAdminUpdateDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserCreateDTO.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserEventQueryDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserLoginDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserPageQueryDTO.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserProfileQueryDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserRegisterDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/UserUpdateDTO.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/core/domain/dto/WorkoutRecordFinishDTO.java
@@ -111,6 +117,7 @@
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/BusinessType.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/DataSourceType.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/DesensitizedType.java
+/work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/EventTypeWeight.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/HttpMethod.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/LimitType.java
 /work/project/Pulse/ruoyi-common/src/main/java/com/ruoyi/common/enums/OperatorType.java

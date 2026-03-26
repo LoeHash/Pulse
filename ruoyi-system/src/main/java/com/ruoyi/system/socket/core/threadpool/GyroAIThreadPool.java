@@ -4,6 +4,8 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.utils.RedisKeyGenUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
+import com.ruoyi.system.config.domain.ins.ThreadPoolConfig;
+import com.ruoyi.system.config.event.DynamicConfigListener;
 import com.ruoyi.system.socket.WsSessionManager;
 import com.ruoyi.system.socket.core.constant.MessageType;
 import com.ruoyi.system.socket.core.domain.ws.AIResult;
@@ -12,6 +14,7 @@ import com.ruoyi.system.socket.core.domain.ws.WsMessage;
 import com.ruoyi.system.socket.core.threadpool.data.DataSource;
 import com.ruoyi.system.socket.core.threadpool.factory.DefaultFactory;
 import com.ruoyi.system.socket.core.threadpool.policy.DefaultPolicy;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -29,7 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Component
-public class GyroAIThreadPool extends AbstractThreadPool {
+public class GyroAIThreadPool extends AbstractThreadPool implements DynamicConfigListener<ThreadPoolConfig> {
+
+
 
     @Autowired
     private WsSessionManager wsManager = SpringUtils.getBean(WsSessionManager.class);
@@ -46,11 +51,49 @@ public class GyroAIThreadPool extends AbstractThreadPool {
 
     @Override
     public void initTasks() {
-        running.compareAndSet(false, true);
+        initTasks(210);
+    }
+
+    public void initTasks(int runningProcessors) {
+        boolean b = running.compareAndSet(false, true);
+        if (!b){
+            throw new RuntimeException("DispatcherThreadPool is already running");
+        }
+
         //初始化线程池，开启线程不断读取redis队列数据
-        for (int i = 0; i < 210; i++) {
+        for (int i = 0; i < runningProcessors; i++) {
             executorService.execute(new AiGyroGenThread());
         }
+    }
+
+    @Override
+    public String getConfigKey() {
+        return "threadPool.global";
+    }
+
+    @Override
+    public void onChange(ThreadPoolConfig newConfig) {
+        this.close();
+
+        //help gc
+        executorService = null;
+
+        //reinitlize
+        executorService = new ThreadPoolExecutor(
+                newConfig.getCorePoolSize(),
+                newConfig.getMaxPoolSize(),
+                newConfig.getKeepAliveTime(),
+                timeUnit,
+                new LinkedBlockingQueue<>(newConfig.getQueueCapacity()),
+                new DefaultFactory(POOL_NAME),
+                new DefaultPolicy()
+        );
+
+        //init
+        initTasks(newConfig.getCorePoolSize() + newConfig.getMaxPoolSize());
+
+
+        System.out.println("线程池已动态更新");
     }
 
     /**
@@ -62,58 +105,62 @@ public class GyroAIThreadPool extends AbstractThreadPool {
 
         @Override
         public void run() {
-            while (running.get() && !Thread.currentThread().isInterrupted()) {
-                try {
-                    // 取出就绪的的session
-                    // 死等
-                    String sessionId = DataSource.readySessions.take();
-
-                    // 允许后续更新再次入队
-                    AtomicBoolean eq = DataSource.enqueued.get(sessionId);
-                    if (eq != null) {
-                        eq.set(false);
-                    }
-
-                    // 通知占用
-                    AtomicBoolean flag =
-                            DataSource
-                                    .inFlight
-                                    .computeIfAbsent
-                                            (sessionId, k -> new AtomicBoolean(false));
-
-                    if (!flag.compareAndSet(false, true)){
-                        // 说明已经被处理了
-                        // 跳过
-                        continue;
-                    }
-
-                    //否则, 就尝试处理
+            try{
+                while (running.get() && !Thread.currentThread().isInterrupted()) {
                     try {
-                        //先移除
-                        WsMessage<GyroWindowPayload> wsMsg = DataSource.gyroDataMap.remove(sessionId);
+                        // 取出就绪的的session
+                        // 死等
+                        String sessionId = DataSource.readySessions.take();
 
-                        // 说明被别人处理过了
-                        // 可能是都在等待compareSet
-                        // 都成功了, 但是只有一个能拿到数据
-                        // 所以进行一次判断
-                        if (wsMsg == null){
-                            // 正在被处理
+                        // 允许后续更新再次入队
+                        AtomicBoolean eq = DataSource.enqueued.get(sessionId);
+                        if (eq != null) {
+                            eq.set(false);
+                        }
+
+                        // 通知占用
+                        AtomicBoolean flag =
+                                DataSource
+                                        .inFlight
+                                        .computeIfAbsent
+                                                (sessionId, k -> new AtomicBoolean(false));
+
+                        if (!flag.compareAndSet(false, true)){
+                            // 说明已经被处理了
                             // 跳过
                             continue;
                         }
 
-                        processMessage(wsMsg);
+                        //否则, 就尝试处理
+                        try {
+                            //先移除
+                            WsMessage<GyroWindowPayload> wsMsg = DataSource.gyroDataMap.remove(sessionId);
 
+                            // 说明被别人处理过了
+                            // 可能是都在等待compareSet
+                            // 都成功了, 但是只有一个能拿到数据
+                            // 所以进行一次判断
+                            if (wsMsg == null){
+                                // 正在被处理
+                                // 跳过
+                                continue;
+                            }
+
+                            processMessage(wsMsg);
+
+                        }catch (InterruptedException e){
+                            Thread.currentThread().interrupt();
+                            break;
+                        } finally {
+                            flag.set(false);
+                        }
                     }catch (InterruptedException e){
+                        //恢复标志
                         Thread.currentThread().interrupt();
-                        break;
-                    } finally {
-                        flag.set(false);
                     }
-                }catch (InterruptedException e){
-                    //恢复标志
-                    Thread.currentThread().interrupt();
                 }
+            }catch (Exception e){
+                log.debug("outting DispatcherThread: " + e.getMessage());
             }
         }
 

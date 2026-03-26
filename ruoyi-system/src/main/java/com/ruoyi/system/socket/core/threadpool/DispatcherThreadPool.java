@@ -5,6 +5,8 @@ import com.alibaba.fastjson2.JSONObject;
 import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.utils.RedisKeyGenUtils;
 import com.ruoyi.common.utils.spring.SpringUtils;
+import com.ruoyi.system.config.domain.ins.ThreadPoolConfig;
+import com.ruoyi.system.config.event.DynamicConfigListener;
 import com.ruoyi.system.socket.WsSessionManager;
 import com.ruoyi.system.socket.core.constant.MessageType;
 import com.ruoyi.system.socket.core.domain.ws.GyroWindowPayload;
@@ -33,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Component
-public class DispatcherThreadPool extends AbstractThreadPool {
+public class DispatcherThreadPool extends AbstractThreadPool implements DynamicConfigListener<ThreadPoolConfig> {
 
     @Autowired
     public StringRedisTemplate stringRedisTemplate;
@@ -56,19 +58,55 @@ public class DispatcherThreadPool extends AbstractThreadPool {
 
     @Override
     public void initTasks() {
+        int processors = Runtime.getRuntime().availableProcessors();
+        initTasks(processors * 6);
+    }
+
+
+    public void initTasks(int runningProcessors) {
         boolean b = running.compareAndSet(false, true);
         if (!b){
             throw new RuntimeException("DispatcherThreadPool is already running");
         }
 
-        int processors = Runtime.getRuntime().availableProcessors();
-
-
         //初始化线程池，开启线程不断读取redis队列数据
-        for (int i = 0; i < processors * 6; i++) {
+        for (int i = 0; i < runningProcessors; i++) {
             executorService.execute(new DispatcherThread());
         }
     }
+
+
+
+    @Override
+    public String getConfigKey() {
+        return "threadPool.global";
+    }
+
+    @Override
+    public void onChange(ThreadPoolConfig newConfig) {
+
+        this.close();
+
+        //help gc
+        executorService = null;
+
+        //reinitlize
+        executorService = new ThreadPoolExecutor(
+                newConfig.getCorePoolSize(),
+                newConfig.getMaxPoolSize(),
+                newConfig.getKeepAliveTime(),
+                timeUnit,
+                new LinkedBlockingQueue<>(newConfig.getQueueCapacity()),
+                new DefaultFactory(POOL_NAME),
+                new DefaultPolicy()
+        );
+
+        //init
+        initTasks(newConfig.getCorePoolSize() + newConfig.getMaxPoolSize());
+
+        System.out.println("线程池已动态更新");
+    }
+
 
     /**
      * 不断的读取redis队列数据
@@ -79,25 +117,29 @@ public class DispatcherThreadPool extends AbstractThreadPool {
         public void run() {
             String gyroKey = RedisKeyGenUtils.genMqGyroKey();
 
-            while (running.get() && !Thread.currentThread().isInterrupted()){
+            try {
+                while (running.get() && !Thread.currentThread().isInterrupted()) {
 
-                List<String> messages = batchRightPop(gyroKey, BATCH_SIZE);
+                    List<String> messages = batchRightPop(gyroKey, BATCH_SIZE);
 
-                if (messages.isEmpty()){
-                    //为空
-                    //尝试阻塞pop
-                    String message = stringRedisTemplate
-                        .opsForList()
-                        .rightPop(RedisKeyGenUtils.genMqGyroKey(), 8, TimeUnit.SECONDS);
+                    if (messages.isEmpty()) {
+                        //为空
+                        //尝试阻塞pop
+                        String message = stringRedisTemplate
+                                .opsForList()
+                                .rightPop(RedisKeyGenUtils.genMqGyroKey(), 8, TimeUnit.SECONDS);
 
-                    dispatchMessage(message);
-                    continue;
+                        dispatchMessage(message);
+                        continue;
+                    }
+
+                    for (String msg : messages) {
+                        dispatchMessage(msg);
+                    }
+
                 }
-
-                for (String msg : messages) {
-                    dispatchMessage(msg);
-                }
-
+            }catch (Exception e){
+                log.debug("outting DispatcherThread: " + e.getMessage());
             }
         }
 

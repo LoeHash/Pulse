@@ -1,6 +1,7 @@
 package com.ruoyi.system.socket.core.threadpool;
 
 import jakarta.annotation.PreDestroy;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -14,10 +15,11 @@ public abstract class AbstractThreadPool {
 
     public AtomicBoolean running = new AtomicBoolean(false);
 
+    @Getter
     protected ExecutorService executorService;
 
-
-    private String poolName;
+    @Getter
+    private final String poolName;
 
 
 
@@ -26,6 +28,27 @@ public abstract class AbstractThreadPool {
     }
 
     public abstract void initTasks();
+
+
+    public void close(){
+        if (running.compareAndSet(true, false)) {
+            executorService.shutdown();  // 不再接受新任务
+            try {
+                // 等待已有任务完成，最多等待 30 秒
+                if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();  // 强制关闭
+                    // 等待强制关闭完成
+                    if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                        System.err.println("Executor did not terminate");
+                    }
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
 
     @PreDestroy
     public void stop(){

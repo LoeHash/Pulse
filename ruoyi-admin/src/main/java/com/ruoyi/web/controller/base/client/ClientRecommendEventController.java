@@ -1,5 +1,7 @@
 package com.ruoyi.web.controller.base.client;
 
+import com.ruoyi.common.annotation.RequireRole;
+import com.ruoyi.common.constant.RequireRoleConstant;
 import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.domain.UserEventBatchReq;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * - 批量上报用户行为事件接口
  */
 @RestController
-@RequestMapping("/api/recommend/event")
+@RequestMapping("/client/recommend/event")
 @RequiredArgsConstructor
 public class ClientRecommendEventController extends BaseController {
 
@@ -31,6 +33,7 @@ public class ClientRecommendEventController extends BaseController {
      * @return 统一响应
      */
     @PostMapping("/batch")
+    @RequireRole(RequireRoleConstant.ROLE_NORMAL_CODE)
     public AjaxResult batch(@RequestBody UserEventBatchReq req) {
         recommendEventService.handleBatch(req);
         return AjaxResult.success("事件处理成功");

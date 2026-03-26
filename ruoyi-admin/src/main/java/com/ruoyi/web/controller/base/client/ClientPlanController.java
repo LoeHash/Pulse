@@ -56,7 +56,7 @@ public class ClientPlanController extends BaseController {
                  // 这是一个复杂的OR逻辑，因为可以匹配 fitPeopleTags OR goalTags OR bodyPartTags
                  // 但 TagConditionUtils.applyJsonLikeTags 是 AND 逻辑添加到 wrapper 中
                  // 因此我们需要手动构建 OR 块
-                 
+
                  // 手动模拟 TagConditionUtils 的逻辑，但应用于三个字段的 OR 关系
                  // (fit LIKE tag OR goal LIKE tag OR body LIKE tag)
                  String likeValue = "\"" + dto.getTagKeyword() + "\"";

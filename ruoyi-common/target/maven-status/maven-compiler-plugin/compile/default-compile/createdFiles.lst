@@ -1,6 +1,7 @@
 com/ruoyi/common/core/domain/Sport.class
 com/ruoyi/common/core/domain/dto/ForumBoardUpdateDTO.class
 com/ruoyi/common/core/domain/dto/ForumPostUpdateDTO.class
+com/ruoyi/common/core/domain/dto/UserEventQueryDTO.class
 com/ruoyi/common/core/domain/dto/SportRecordStartDTO.class
 com/ruoyi/common/core/domain/dto/ForumPostCreateDTO.class
 com/ruoyi/common/core/domain/ForumPost.class
@@ -9,4 +10,5 @@ com/ruoyi/common/core/domain/dto/SportRecordQueryDTO.class
 com/ruoyi/common/core/domain/dto/ForumPostQueryDTO.class
 com/ruoyi/common/core/domain/ForumBoard.class
 com/ruoyi/common/core/domain/dto/SportRecordFinishDTO.class
+com/ruoyi/common/core/domain/dto/UserProfileQueryDTO.class
 com/ruoyi/common/core/domain/dto/ForumBoardCreateDTO.class

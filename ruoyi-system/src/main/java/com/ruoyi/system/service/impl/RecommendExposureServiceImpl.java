@@ -2,9 +2,9 @@ package com.ruoyi.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.ruoyi.system.recommand.domain.TbRecommendExposure;
-import com.ruoyi.system.recommand.mapper.RecommendExposureMapper;
-import com.ruoyi.system.recommand.service.IRecommendExposureService;
+import com.ruoyi.system.recommend.domain.TbRecommendExposure;
+import com.ruoyi.system.recommend.mapper.RecommendExposureMapper;
+import com.ruoyi.system.recommend.service.IRecommendExposureService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
